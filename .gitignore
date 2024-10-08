@@ -46,7 +46,6 @@ build/
 **/ios/Runner/GeneratedPluginRegistrant.*
 **/ios/Runner.xcworkspace/xcshareddata/
 
-
 # Exceptions to above rules.
 !**/ios/**/default.mode1v3
 !**/ios/**/default.mode2v3
@@ -63,3 +62,6 @@ ios/Runner.xcworkspace/xcshareddata/
 example/ios/Flutter/flutter_export_environment.sh
 audio_waveforms.iml
 pubspec.lock
+
+# FVM Version Cache
+.fvm/

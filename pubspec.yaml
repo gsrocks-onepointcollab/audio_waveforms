@@ -17,6 +17,8 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
 
+dependency_overrides:
+  win32: ^5.5.5
 
 flutter:
   plugin:
