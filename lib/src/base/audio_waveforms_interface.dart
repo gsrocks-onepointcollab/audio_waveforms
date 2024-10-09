@@ -242,7 +242,7 @@ class AudioWaveformsInterface {
     _methodChannel.setMethodCallHandler(null);
   }
 
-  void saveFileLocally() {
-    _methodChannel.invokeMethod(Constants.saveFileLocally);
+  void saveFileLocally({required String path}) {
+    _methodChannel.invokeMethod(Constants.saveFileLocally, {Constants.path: path});
   }
 }

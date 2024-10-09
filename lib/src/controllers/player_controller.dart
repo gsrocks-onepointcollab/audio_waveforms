@@ -307,8 +307,8 @@ class PlayerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void saveFileLocally() {
-    AudioWaveformsInterface.instance.saveFileLocally();
+  void saveFileLocally({required String path}) {
+    AudioWaveformsInterface.instance.saveFileLocally(path: path);
   }
 
   @override

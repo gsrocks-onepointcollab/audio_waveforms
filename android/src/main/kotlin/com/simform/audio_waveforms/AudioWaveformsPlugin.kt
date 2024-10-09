@@ -55,19 +55,27 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 bitRate = (call.argument(Constants.bitRate) as Int?)
                 checkPathAndInitialiseRecorder(result, encoder, outputFormat, sampleRate, bitRate)
             }
+
             Constants.startRecording -> {
                 val useLegacyNormalization =
                     (call.argument(Constants.useLegacyNormalization) as Boolean?) ?: false
                 audioRecorder.startRecorder(result, recorder, useLegacyNormalization)
             }
+
             Constants.stopRecording -> {
                 audioRecorder.stopRecording(result, recorder, path!!)
                 recorder = null
             }
+
             Constants.pauseRecording -> audioRecorder.pauseRecording(result, recorder)
             Constants.resumeRecording -> audioRecorder.resumeRecording(result, recorder)
             Constants.getDecibel -> audioRecorder.getDecibel(result, recorder)
-            Constants.checkPermission -> audioRecorder.checkPermission(result, activity, result :: success)
+            Constants.checkPermission -> audioRecorder.checkPermission(
+                result,
+                activity,
+                result::success
+            )
+
             Constants.preparePlayer -> {
                 val audioPath = call.argument(Constants.path) as String?
                 val volume = call.argument(Constants.volume) as Double?
@@ -76,16 +84,17 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 if (key != null) {
                     initPlayer(key)
                     audioPlayers[key]?.preparePlayer(
-                            result,
-                            audioPath,
-                            volume?.toFloat(),
-                            frequency?.toLong(),
+                        result,
+                        audioPath,
+                        volume?.toFloat(),
+                        frequency?.toLong(),
                     )
                 } else {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
 
             }
+
             Constants.startPlayer -> {
                 val finishMode = call.argument(Constants.finishMode) as Int?
                 val key = call.argument(Constants.playerKey) as String?
@@ -98,6 +107,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.stopPlayer -> {
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
@@ -106,6 +116,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.pausePlayer -> {
                 val key = call.argument(Constants.playerKey) as String?
                 if (key != null) {
@@ -114,10 +125,12 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.releasePlayer -> {
                 val key = call.argument(Constants.playerKey) as String?
                 audioPlayers[key]?.release(result)
             }
+
             Constants.seekTo -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val progress = call.argument(Constants.progress) as Int?
@@ -134,6 +147,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     )
                 }
             }
+
             Constants.setVolume -> {
                 val volume = call.argument(Constants.volume) as Double?
                 val key = call.argument(Constants.playerKey) as String?
@@ -143,6 +157,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.setRate -> {
                 val rate = call.argument(Constants.rate) as Double?
                 val key = call.argument(Constants.playerKey) as String?
@@ -152,6 +167,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.getDuration -> {
                 val type =
                     if ((call.argument(Constants.durationType) as Int?) == 0) DurationType.Current else DurationType.Max
@@ -162,6 +178,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.extractWaveformData -> {
                 val key = call.argument(Constants.playerKey) as String?
                 val path = call.argument(Constants.path) as String?
@@ -177,6 +194,7 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     result.error(Constants.LOG_TAG, "Player key can't be null", "")
                 }
             }
+
             Constants.stopAllPlayers -> {
                 for ((key, _) in audioPlayers) {
                     audioPlayers[key]?.stop(result)
@@ -184,6 +202,22 @@ class AudioWaveformsPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 }
                 result.success(true)
             }
+
+            Constants.saveFileLocally -> {
+                val path = call.argument(Constants.path) as String?
+                val downloader = AudioDownloader(applicationContext)
+                if (path == null) {
+                    result.error(
+                        Constants.LOG_TAG,
+                        "Path is not provided",
+                        ""
+                    )
+                } else {
+                    result.success(true)
+                    downloader.downloadFile(path)
+                }
+            }
+
             else -> result.notImplemented()
         }
     }
