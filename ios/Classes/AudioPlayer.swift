@@ -65,12 +65,12 @@ class AudioPlayer: NSObject {
             player?.play()
             finishType = 0
         case .pause:
+            player?.seek(to: CMTime.zero)
             player?.pause()
             stopListening()
             finishType = 1
         case .stop:
             player?.pause()
-            player?.seek(to: CMTime.zero)
             stopListening()
             finishType = 2
         }

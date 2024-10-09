@@ -241,4 +241,8 @@ class AudioWaveformsInterface {
   void removeMethodCallHandler() {
     _methodChannel.setMethodCallHandler(null);
   }
+
+  void saveFileLocally() {
+    _methodChannel.invokeMethod(Constants.saveFileLocally);
+  }
 }

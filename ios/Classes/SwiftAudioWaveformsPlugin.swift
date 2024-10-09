@@ -7,6 +7,7 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
     var audioPlayers = [String: AudioPlayer]()
     var extractors = [String: WaveformExtractor]()
     var flutterChannel: FlutterMethodChannel
+    private var lastFileUrl: URL?
     
     init(registrar: FlutterPluginRegistrar, flutterChannel: FlutterMethodChannel) {
         self.flutterChannel = flutterChannel
@@ -139,11 +140,14 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
             } else {
                 result(FlutterError(code: Constants.audioWaveforms, message: "Player key or path is null", details: nil))
             }
+        case Constants.saveFileLocally:
+            if let url = lastFileUrl {
+                saveFileToUserDirectory(url: url, result: result)
+            }
         default:
             result(FlutterMethodNotImplemented)
         }
     }
-    
     
     func initPlayer(playerKey: String) {
         if audioPlayers[playerKey] == nil {
@@ -177,6 +181,7 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
     }
     
     private func processAudioFile(playerKey: String, result: @escaping FlutterResult, path: String, noOfSamples: Int?) {
+        self.lastFileUrl = nil
         guard let url = URL(string: path) else {
             result(FlutterError(code: Constants.audioWaveforms, message: "Invalid URL", details: nil))
             return
@@ -198,25 +203,46 @@ public class SwiftAudioWaveformsPlugin: NSObject, FlutterPlugin {
     }
     
     private func downloadRemoteFile(url: URL, completion: @escaping (URL?) -> Void) {
+        let fileManager = FileManager.default
+        let destinationURL = fileManager.temporaryDirectory.appendingPathComponent(url.lastPathComponent)
+        
+        if fileManager.fileExists(atPath: destinationURL.path) {
+            completion(destinationURL)
+            lastFileUrl = destinationURL
+            return
+        }
+        
         let task = URLSession.shared.downloadTask(with: url) { (tempURL, response, error) in
             guard let tempURL = tempURL, error == nil else {
                 completion(nil)
                 return
             }
             
-            completion(tempURL)
-//            let fileManager = FileManager.default
-//            let destinationURL = fileManager.temporaryDirectory.appendingPathComponent(url.lastPathComponent)
-            
-//            do {
-//                try fileManager.moveItem(at: tempURL, to: destinationURL)
-//                completion(destinationURL)
-//            } catch {
-//                print("Download error: \(error)")
-//                completion(nil)
-//            }
+            do {
+                if fileManager.fileExists(atPath: destinationURL.path) {
+                    try fileManager.removeItem(at: destinationURL)
+                }
+                try fileManager.moveItem(at: tempURL, to: destinationURL)
+                self.lastFileUrl = destinationURL
+                completion(destinationURL)
+            } catch {
+                print("Download error: \(error)")
+                self.lastFileUrl = nil
+                completion(nil)
+            }
         }
+        
         task.resume()
+    }
+    
+    func saveFileToUserDirectory(url: URL, result: @escaping FlutterResult) {
+        let picker = UIDocumentPickerViewController(forExporting: [url], asCopy: true)
+        picker.directoryURL = FileManager.default.urls(
+            for: .documentDirectory,
+            in: .userDomainMask
+        ).first
+        UIApplication.shared.delegate?.window??.rootViewController?.present(picker, animated: true)
+        result(true)
     }
     
     func createOrUpdateExtractor(playerKey: String, result: @escaping FlutterResult, path: String, noOfSamples: Int?) {
